@@ -40,6 +40,47 @@ ai_sql_chatbot/
 └── README.md
 ```
 
+## Output Preview
+
+Add your real app screenshots in a `screenshots/` folder and link them here.
+
+```md
+![Chatbot UI](screenshots/chatbot-ui.png)
+![Query Result](screenshots/query-result.png)
+```
+
+### Sample Question
+
+```text
+Show the top 5 products by total sales.
+```
+
+### Generated SQL
+
+```sql
+SELECT product_name, SUM(total_amount) AS total_sales
+FROM orders
+GROUP BY product_name
+ORDER BY total_sales DESC
+LIMIT 5;
+```
+
+### Sample Result
+
+| Product Name | Total Sales |
+| --- | ---: |
+| Wireless Mouse | 125000 |
+| Office Chair | 98000 |
+| Laptop Stand | 76000 |
+| Keyboard | 64500 |
+| Monitor | 58000 |
+
+### AI Summary
+
+```text
+Wireless Mouse has the highest total sales, followed by Office Chair and Laptop Stand. The top 5 products together show which items are contributing most to revenue.
+```
+
 ## Environment Variables
 
 Do not upload your real `.env` file to GitHub. It contains secrets.
