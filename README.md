@@ -52,7 +52,7 @@ Add your real app screenshots in a `screenshots/` folder and link them here.
 ### Sample Question
 
 ```text
-Show the top 5 products by total sales.
+list all customer_name and product_price along with bar graph.
 ```
 
 ### Generated SQL
