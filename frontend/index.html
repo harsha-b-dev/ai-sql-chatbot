@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Enterprise AI SQL Assistant</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+:root{
+--bg:#f8f9ff;
+--panel:#ffffff;
+--panel-soft:#f4f2ff;
+--ink:#0f1430;
+--muted:#6b7280;
+--line:#e6e8f4;
+--primary:#7357ff;
+--primary-dark:#4f46e5;
+--accent:#2f7df6;
+--accent-soft:#eef4ff;
+--warning:#5b4def;
+--warning-soft:#f3f0ff;
+--danger:#e11d48;
+--shadow:0 18px 45px rgba(12,18,52,.11);
+}
+
+*{
+box-sizing:border-box;
+}
+
+body{
+margin:0;
+font-family:"Segoe UI",Arial,sans-serif;
+background:
+radial-gradient(circle at 82% 8%,rgba(115,87,255,.34),transparent 24%),
+linear-gradient(135deg,#05091f 0%,#11104d 38%,#f8f9ff 38%,#f8f9ff 100%);
+color:var(--ink);
+display:flex;
+height:100vh;
+overflow:hidden;
+}
+
+.sidebar{
+width:292px;
+background:
+radial-gradient(circle at 24% 0%,rgba(115,87,255,.28),transparent 32%),
+linear-gradient(180deg,#061126,#081a34);
+border-right:1px solid var(--line);
+padding:24px 20px;
+display:flex;
+flex-direction:column;
+gap:22px;
+box-shadow:8px 0 30px rgba(2,8,23,.30);
+}
+
+.brand{
+display:flex;
+align-items:center;
+gap:12px;
+}
+
+.brand-mark{
+width:42px;
+height:42px;
+border-radius:12px;
+background:linear-gradient(135deg,#7c6cff,#4f46e5);
+color:white;
+display:grid;
+place-items:center;
+font-weight:800;
+letter-spacing:.4px;
+box-shadow:0 12px 24px rgba(115,87,255,.36);
+}
+
+.brand h2{
+margin:0;
+font-size:19px;
+line-height:1.15;
+}
+
+.brand p{
+margin:3px 0 0;
+font-size:12px;
+color:#b9c3df;
+}
+
+.side-section{
+display:flex;
+flex-direction:column;
+gap:10px;
+min-height:0;
+}
+
+.side-title{
+font-size:12px;
+font-weight:700;
+color:#b9c3df;
+text-transform:uppercase;
+letter-spacing:.08em;
+}
+
+.clear-btn{
+width:100%;
+background:rgba(255,255,255,.09);
+border:1px solid rgba(255,255,255,.16);
+padding:10px 12px;
+border-radius:8px;
+color:#eef2ff;
+font-weight:700;
+cursor:pointer;
+transition:.18s ease;
+}
+
+.clear-btn:hover{
+background:rgba(115,87,255,.26);
+transform:translateY(-1px);
+}
+
+.history{
+overflow:auto;
+padding-right:4px;
+}
+
+.history:empty::before{
+content:"Your recent questions will appear here.";
+display:block;
+padding:12px;
+border:1px dashed var(--line);
+border-radius:8px;
+color:var(--muted);
+font-size:13px;
+line-height:1.45;
+}
+
+.history div{
+padding:11px 12px;
+margin-top:8px;
+border-radius:8px;
+cursor:pointer;
+transition:.18s ease;
+background:rgba(255,255,255,.075);
+border:1px solid rgba(255,255,255,.10);
+font-size:13px;
+line-height:1.35;
+color:#e6ecff;
+}
+
+.history div:hover{
+background:rgba(115,87,255,.26);
+border-color:rgba(139,92,246,.50);
+color:#ffffff;
+}
+
+.database-list{
+overflow:auto;
+padding-right:4px;
+max-height:210px;
+}
+
+.database-list:empty::before{
+content:"Click Load Tables to view database tables.";
+display:block;
+padding:12px;
+border:1px dashed rgba(255,255,255,.18);
+border-radius:8px;
+color:#b9c3df;
+font-size:13px;
+line-height:1.45;
+}
+
+.database-list div{
+padding:11px 12px;
+margin-top:8px;
+border-radius:8px;
+cursor:pointer;
+transition:.18s ease;
+background:rgba(255,255,255,.075);
+border:1px solid rgba(255,255,255,.10);
+font-size:13px;
+line-height:1.35;
+color:#e6ecff;
+}
+
+.database-list div:hover,
+.database-list div.active{
+background:rgba(47,125,246,.28);
+border-color:rgba(96,165,250,.55);
+color:#ffffff;
+}
+
+.main{
+flex:1;
+display:flex;
+flex-direction:column;
+min-width:0;
+}
+
+.header{
+padding:22px 34px 18px;
+border-bottom:1px solid rgba(255,255,255,.10);
+background:rgba(5,9,31,.90);
+backdrop-filter:blur(14px);
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:18px;
+}
+
+.header h1{
+margin:0;
+font-size:25px;
+line-height:1.2;
+letter-spacing:0;
+color:#ffffff;
+}
+
+.header p{
+margin:6px 0 0;
+color:#d3d9f5;
+font-size:14px;
+}
+
+.status-pill{
+display:flex;
+align-items:center;
+gap:8px;
+padding:9px 12px;
+border:1px solid rgba(139,92,246,.70);
+background:rgba(115,87,255,.18);
+color:#dcd7ff;
+border-radius:999px;
+font-size:13px;
+font-weight:700;
+white-space:nowrap;
+}
+
+.status-dot{
+width:8px;
+height:8px;
+border-radius:50%;
+background:var(--accent);
+box-shadow:0 0 0 4px rgba(115,87,255,.24);
+}
+
+#chat{
+flex:1;
+overflow:auto;
+padding:30px 34px;
+width:min(100%,1040px);
+margin:0 auto;
+}
+
+.empty-state{
+max-width:760px;
+margin:42px auto 10px;
+padding:30px;
+background:rgba(255,255,255,.98);
+border:1px solid rgba(230,232,244,.98);
+border-radius:8px;
+box-shadow:var(--shadow);
+}
+
+.empty-state h3{
+margin:0 0 8px;
+font-size:23px;
+}
+
+.empty-state p{
+margin:0 0 18px;
+color:var(--muted);
+line-height:1.6;
+}
+
+.database-view{
+background:rgba(255,255,255,.98);
+border:1px solid rgba(230,232,244,.98);
+border-radius:8px;
+box-shadow:var(--shadow);
+padding:24px;
+}
+
+.database-view h3{
+margin:0;
+font-size:23px;
+}
+
+.database-view p{
+margin:6px 0 18px;
+color:var(--muted);
+line-height:1.55;
+}
+
+.prompt-grid{
+display:grid;
+grid-template-columns:repeat(2,minmax(0,1fr));
+gap:10px;
+}
+
+.prompt-chip{
+border:1px solid #e6e8f4;
+background:#f9f8ff;
+border-radius:8px;
+padding:12px;
+font-size:13px;
+color:#2a3150;
+cursor:pointer;
+transition:.18s ease;
+}
+
+.prompt-chip:hover{
+border-color:#cbc5ff;
+background:#f4f2ff;
+}
+
+.row{
+display:flex;
+align-items:flex-start;
+gap:12px;
+margin:16px 0;
+animation:fade .22s ease;
+}
+
+.row.user{
+justify-content:flex-end;
+}
+
+@keyframes fade{
+from{opacity:0;transform:translateY(10px)}
+to{opacity:1;transform:translateY(0)}
+}
+
+.avatar{
+width:38px;
+height:38px;
+border-radius:12px;
+display:flex;
+align-items:center;
+justify-content:center;
+font-weight:800;
+font-size:13px;
+flex:0 0 auto;
+}
+
+.user-avatar{
+background:#f4f2ff;
+color:var(--primary);
+border:1px solid #dcd7ff;
+order:2;
+}
+
+.bot-avatar{
+background:var(--accent-soft);
+color:#2f7df6;
+border:1px solid #c7ddff;
+}
+
+.message{
+background:rgba(255,255,255,.94);
+border:1px solid var(--line);
+padding:15px 16px;
+border-radius:8px;
+max-width:min(78%,820px);
+line-height:1.55;
+box-shadow:0 10px 28px rgba(12,18,52,.075);
+overflow:auto;
+}
+
+.user .message{
+background:linear-gradient(135deg,#7357ff,#4f46e5);
+border-color:transparent;
+color:white;
+box-shadow:0 14px 32px rgba(115,87,255,.28);
+}
+
+.summary-box,
+.insight-box{
+padding:12px 14px;
+border-radius:8px;
+margin-bottom:12px;
+border:1px solid;
+}
+
+.summary-box{
+background:#f4f2ff;
+border-color:#dcd7ff;
+color:#4f46e5;
+}
+
+.insight-box{
+background:var(--warning-soft);
+border-color:#dcd7ff;
+color:var(--warning);
+}
+
+.table-wrap{
+width:100%;
+overflow:auto;
+border:1px solid var(--line);
+border-radius:8px;
+background:white;
+}
+
+table{
+border-collapse:collapse;
+width:100%;
+min-width:520px;
+font-size:13px;
+}
+
+th,td{
+border-bottom:1px solid #e6e8f4;
+padding:10px 12px;
+text-align:left;
+vertical-align:top;
+}
+
+th{
+background:#f9f8ff;
+color:#2a3150;
+font-weight:800;
+}
+
+tr:last-child td{
+border-bottom:none;
+}
+
+.typing span{
+animation:blink 1.2s infinite;
+font-size:22px;
+line-height:0;
+}
+
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+
+@keyframes blink{
+0%{opacity:.2}
+50%{opacity:1}
+100%{opacity:.2}
+}
+
+canvas{
+margin-top:16px;
+padding:12px;
+border:1px solid var(--line);
+border-radius:8px;
+background:white;
+opacity:0;
+transform:translateY(12px);
+animation:chartIn .45s ease forwards;
+}
+
+@keyframes chartIn{
+to{opacity:1;transform:translateY(0)}
+}
+
+.export-btn{
+margin-top:12px;
+background:#f4f2ff;
+border:1px solid #dcd7ff;
+padding:10px 13px;
+border-radius:8px;
+cursor:pointer;
+color:#4f46e5;
+font-weight:800;
+transition:.18s ease;
+}
+
+.export-btn:hover{
+background:#ece8ff;
+transform:translateY(-1px);
+}
+
+.input-shell{
+padding:18px 34px 24px;
+background:rgba(255,255,255,.86);
+border-top:1px solid var(--line);
+backdrop-filter:blur(14px);
+}
+
+.input-area{
+width:min(100%,1040px);
+margin:0 auto;
+display:flex;
+gap:12px;
+align-items:center;
+padding:10px;
+background:white;
+border:1px solid #dcd7ff;
+border-radius:8px;
+box-shadow:0 14px 36px rgba(12,18,52,.13);
+}
+
+input{
+flex:1;
+min-width:0;
+padding:13px 14px;
+border:none;
+background:#f9f8ff;
+color:var(--ink);
+outline:none;
+border-radius:8px;
+font-size:15px;
+}
+
+input::placeholder{
+color:#7d87a4;
+}
+
+button{
+font-family:inherit;
+}
+
+.send-btn{
+padding:13px 20px;
+border:none;
+border-radius:8px;
+background:linear-gradient(135deg,#7357ff,#2f7df6);
+color:white;
+font-weight:800;
+cursor:pointer;
+transition:.18s ease;
+box-shadow:0 12px 24px rgba(115,87,255,.28);
+}
+
+.send-btn:hover{
+transform:translateY(-1px);
+box-shadow:0 16px 28px rgba(115,87,255,.36);
+}
+
+.error-state{
+color:#be123c;
+background:#fff1f2;
+border:1px solid #fecdd3;
+}
+
+@media (max-width:860px){
+body{
+flex-direction:column;
+height:auto;
+min-height:100vh;
+overflow:auto;
+}
+
+.sidebar{
+width:100%;
+border-right:none;
+border-bottom:1px solid var(--line);
+padding:18px;
+}
+
+.history{
+max-height:130px;
+}
+
+.header{
+align-items:flex-start;
+flex-direction:column;
+padding:20px;
+}
+
+#chat{
+padding:20px;
+}
+
+.empty-state{
+margin:16px 0;
+padding:20px;
+}
+
+.prompt-grid{
+grid-template-columns:1fr;
+}
+
+.message{
+max-width:calc(100vw - 92px);
+}
+
+.input-shell{
+padding:14px;
+}
+
+.input-area{
+align-items:stretch;
+flex-direction:column;
+}
+
+.send-btn{
+width:100%;
+}
+}
+</style>
+</head>
+
+<body>
+
+<aside class="sidebar">
+<div class="brand">
+<div class="brand-mark">SQL</div>
+<div>
+<h2>AI SQL Assistant</h2>
+<p>Database intelligence workspace</p>
+</div>
+</div>
+
+<div class="side-section">
+<div class="side-title">Session</div>
+<button class="clear-btn" onclick="clearHistory()">Clear History</button>
+</div>
+
+<div class="side-section">
+<div class="side-title">Database</div>
+<button class="clear-btn" onclick="loadTables()">Load Tables</button>
+<div id="databaseList" class="database-list"></div>
+</div>
+
+<div class="side-section">
+<div class="side-title">Recent Questions</div>
+<div id="history" class="history"></div>
+</div>
+</aside>
+
+<main class="main">
+<header class="header">
+<div>
+<h1>Enterprise AI SQL Assistant</h1>
+<p>Ask natural language questions and receive summaries, insights, tables, and charts.</p>
+</div>
+<div class="status-pill"><span class="status-dot"></span>Backend: localhost:8000</div>
+</header>
+
+<section id="chat">
+<div class="empty-state" id="emptyState">
+<h3>Start exploring your database</h3>
+<p>Try a focused question about customers, orders, products, payments, or shipments. Add "chart" or "graph" when you want a visual result.</p>
+<div class="prompt-grid">
+<div class="prompt-chip" onclick="reuse('Show top 5 products by sales chart')">Show top 5 products by sales chart</div>
+<div class="prompt-chip" onclick="reuse('Which customers placed the most orders?')">Which customers placed the most orders?</div>
+<div class="prompt-chip" onclick="reuse('Show payment status summary')">Show payment status summary</div>
+<div class="prompt-chip" onclick="reuse('List recent shipments and their status')">List recent shipments and their status</div>
+</div>
+</div>
+</section>
+
+<div class="input-shell">
+<div class="input-area">
+<input id="question" placeholder="Ask a database question..." />
+<button class="send-btn" onclick="send()">Ask AI</button>
+</div>
+</div>
+</main>
+
+<script>
+let chat=document.getElementById("chat");
+let input=document.getElementById("question");
+let historyBox=document.getElementById("history");
+let databaseList=document.getElementById("databaseList");
+let emptyState=document.getElementById("emptyState");
+
+input.addEventListener("keypress",e=>{
+if(e.key==="Enter") send();
+});
+
+function escapeHtml(value){
+return String(value)
+.replaceAll("&","&amp;")
+.replaceAll("<","&lt;")
+.replaceAll(">","&gt;")
+.replaceAll('"',"&quot;")
+.replaceAll("'","&#039;");
+}
+
+function loadHistory(){
+let h=JSON.parse(localStorage.getItem("chat_history")||"[]");
+historyBox.innerHTML="";
+h.slice(0,10).forEach(q=>{
+let item=document.createElement("div");
+item.textContent=q;
+item.onclick=()=>reuse(q);
+historyBox.appendChild(item);
+});
+}
+
+function saveHistory(q){
+let h=JSON.parse(localStorage.getItem("chat_history")||"[]");
+h.unshift(q);
+h=[...new Set(h)].slice(0,10);
+localStorage.setItem("chat_history",JSON.stringify(h));
+loadHistory();
+}
+
+function clearHistory(){
+localStorage.removeItem("chat_history");
+loadHistory();
+}
+
+function reuse(q){
+input.value=q;
+input.focus();
+}
+
+loadHistory();
+
+function removeEmptyState(){
+if(emptyState){
+emptyState.remove();
+emptyState=null;
+}
+}
+
+function buildTableHtml(columns, rows){
+let html='<div class="table-wrap"><table><tr>';
+columns.forEach(c=>html+=`<th>${escapeHtml(c)}</th>`);
+html+="</tr>";
+
+rows.forEach(r=>{
+html+="<tr>";
+r.forEach(v=>html+=`<td>${escapeHtml(v)}</td>`);
+html+="</tr>";
+});
+
+html+="</table></div>";
+return html;
+}
+
+async function loadTables(){
+databaseList.innerHTML='<div>Loading tables...</div>';
+
+try{
+let res=await fetch("http://127.0.0.1:8000/tables");
+let data=await res.json();
+
+databaseList.innerHTML="";
+
+if(!data.tables || data.tables.length===0){
+databaseList.innerHTML="<div>No tables found.</div>";
+return;
+}
+
+data.tables.forEach(table=>{
+let item=document.createElement("div");
+item.textContent=table;
+item.onclick=()=>loadTableData(table,item);
+databaseList.appendChild(item);
+});
+}catch(e){
+databaseList.innerHTML="<div>Backend not reachable.</div>";
+}
+}
+
+async function loadTableData(tableName,item){
+document.querySelectorAll(".database-list div").forEach(el=>el.classList.remove("active"));
+if(item) item.classList.add("active");
+
+removeEmptyState();
+
+chat.innerHTML=`
+<div class="database-view">
+<h3>${escapeHtml(tableName)}</h3>
+<p>Loading table contents...</p>
+</div>`;
+
+try{
+let res=await fetch(`http://127.0.0.1:8000/tables/${encodeURIComponent(tableName)}`);
+let data=await res.json();
+
+let rowsCount=data.rows ? data.rows.length : 0;
+let html=`
+<div class="database-view">
+<h3>${escapeHtml(data.table || tableName)}</h3>
+<p>Showing first ${rowsCount} rows from this table.</p>
+${buildTableHtml(data.columns || [], data.rows || [])}
+</div>`;
+
+chat.innerHTML=html;
+}catch(e){
+chat.innerHTML=`
+<div class="database-view error-state">
+<h3>${escapeHtml(tableName)}</h3>
+<p>Unable to load this table. Check that the backend is running.</p>
+</div>`;
+}
+}
+
+function addMessage(text,isUser){
+removeEmptyState();
+let avatar=isUser?"YOU":"AI";
+chat.innerHTML+=`
+<div class="row ${isUser?'user':'bot'}">
+<div class="avatar ${isUser?'user-avatar':'bot-avatar'}">${avatar}</div>
+<div class="message">${text}</div>
+</div>`;
+chat.scrollTop=chat.scrollHeight;
+}
+
+async function send(){
+let question=input.value.trim();
+if(!question) return;
+
+saveHistory(question);
+addMessage(escapeHtml(question),true);
+input.value="";
+
+let loaderId="load"+Date.now();
+
+chat.innerHTML+=`
+<div id="${loaderId}" class="row bot">
+<div class="avatar bot-avatar">AI</div>
+<div class="message typing"><span>.</span><span>.</span><span>.</span></div>
+</div>`;
+chat.scrollTop=chat.scrollHeight;
+
+try{
+let res=await fetch("http://127.0.0.1:8000/ask",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({question})
+});
+
+let data=await res.json();
+document.getElementById(loaderId).remove();
+
+if(data.error){
+addMessage(`<div class="message error-state">${escapeHtml(data.error)}</div>`,false);
+return;
+}
+
+let html="";
+
+if(data.summary){
+html += `<div class="summary-box"><b>AI Summary</b><br>${escapeHtml(data.summary)}</div>`;
+}
+
+if(data.insights){
+html += `<div class="insight-box"><b>Key Insights</b><br>${escapeHtml(data.insights)}</div>`;
+}
+
+let qLower=question.toLowerCase();
+let shouldChart=qLower.includes("chart")||
+qLower.includes("graph")||
+qLower.includes("garph")||
+qLower.includes("plot")||
+qLower.includes("visual")||
+qLower.includes("bar")||
+qLower.includes("pie")||
+qLower.includes("line");
+let requestedChartType=null;
+
+if(qLower.includes("pie")){
+requestedChartType="pie";
+}
+else if(qLower.includes("line")){
+requestedChartType="line";
+}
+else if(qLower.includes("bar")){
+requestedChartType="bar";
+}
+
+let chartId=null;
+
+if(data.columns){
+html+=buildTableHtml(data.columns,data.rows);
+
+html+=`<button class="export-btn" onclick='exportCSV(${JSON.stringify(data)})'>Export CSV</button>`;
+
+if(shouldChart){
+chartId="chart"+Date.now();
+html+=`<canvas id="${chartId}" height="120"></canvas>`;
+}
+}else{
+html='<div class="message error-state">No results returned.</div>';
+}
+
+addMessage(html,false);
+
+if(chartId){
+setTimeout(()=>renderChart(chartId,data,requestedChartType),120);
+}
+}catch(e){
+let loader=document.getElementById(loaderId);
+if(loader){
+loader.innerHTML='<div class="avatar bot-avatar">AI</div><div class="message error-state">Backend not reachable. Start FastAPI on port 8000 and try again.</div>';
+}
+}
+}
+
+function renderChart(canvasId,data,requestedChartType){
+let canvas=document.getElementById(canvasId);
+
+if(!canvas){
+return;
+}
+
+if(typeof Chart==="undefined"){
+canvas.outerHTML='<div class="summary-box">Chart library is not loaded. Check your internet connection because Chart.js is loaded from CDN.</div>';
+return;
+}
+
+let numericIndex=-1;
+for(let i=0;i<data.columns.length;i++){
+let test=data.rows.map(r=>Number(r[i]));
+if(!test.some(isNaN)){ numericIndex=i; break; }
+}
+
+if(numericIndex===-1){
+canvas.outerHTML='<div class="summary-box">Chart needs at least one numeric column. This result has no numeric values to plot.</div>';
+return;
+}
+
+let labelIndex=0;
+for(let i=0;i<data.columns.length;i++){
+if(i!==numericIndex){
+labelIndex=i;
+break;
+}
+}
+
+let labels=data.rows.map((r,index)=>String(r[labelIndex] ?? `Row ${index+1}`));
+let values=data.rows.map(r=>Number(r[numericIndex]));
+let type=requestedChartType || "bar";
+
+if(!requestedChartType && data.columns.length===2){
+type="pie";
+}
+else if(!requestedChartType && values.length>6){
+type="line";
+}
+
+new Chart(document.getElementById(canvasId),{
+type:type,
+data:{
+labels:labels,
+datasets:[{
+data:values,
+backgroundColor:["#7357ff","#2f7df6","#8b5cf6","#22d3ee","#4f46e5","#60a5fa"],
+borderColor:"#7357ff",
+borderWidth:2,
+borderRadius:6,
+tension:.35
+}]
+},
+options:{
+animation:{duration:900,easing:"easeOutQuart"},
+plugins:{legend:{display:type==="pie"}},
+scales:type==="pie"?{}:{
+x:{grid:{display:false}},
+y:{grid:{color:"#e6e8f4"}}
+}
+}
+});
+}
+
+function exportCSV(data){
+let csv=data.columns.join(",")+"\n";
+
+data.rows.forEach(r=>{
+csv+=r.join(",")+"\n";
+});
+
+let blob=new Blob([csv],{type:"text/csv"});
+let url=URL.createObjectURL(blob);
+
+let a=document.createElement("a");
+a.href=url;
+a.download="ai_sql_export.csv";
+a.click();
+URL.revokeObjectURL(url);
+}
+</script>
+
+</body>
+</html>
