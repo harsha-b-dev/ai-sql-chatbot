@@ -1,17 +1,13 @@
 import mysql.connector
 import os
 from dotenv import load_dotenv
+from database import get_connection_config
 
 load_dotenv()
 
 def load_schema():
 
-    conn = mysql.connector.connect(
-        host=os.getenv("MYSQL_HOST"),
-        user=os.getenv("MYSQL_USER"),
-        password=os.getenv("MYSQL_PASSWORD"),
-        database=os.getenv("MYSQL_DB")
-    )
+    conn = mysql.connector.connect(**get_connection_config())
 
     cursor = conn.cursor()
 
