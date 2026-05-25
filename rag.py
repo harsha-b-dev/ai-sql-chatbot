@@ -1,36 +1,36 @@
+import re
+
 from schema_loader import load_schema
 
-model = None
 schema_docs = None
-schema_embeddings = None
 
 
-def _get_model():
-    global model
-
-    if model is None:
-        from sentence_transformers import SentenceTransformer
-
-        model = SentenceTransformer("all-MiniLM-L6-v2")
-
-    return model
-
-
-def _load_schema_index():
-    global schema_docs, schema_embeddings
+def _load_schema_docs():
+    global schema_docs
 
     if schema_docs is None:
-        embedding_model = _get_model()
         schema_docs = load_schema()
-        schema_embeddings = embedding_model.encode(schema_docs, normalize_embeddings=True)
+
+    return schema_docs
+
+
+def _tokens(text):
+    return set(re.findall(r"[a-z0-9_]+", text.lower()))
 
 
 def get_schema_context(question):
-    _load_schema_index()
+    docs = _load_schema_docs()
+    question_tokens = _tokens(question)
 
-    embedding_model = _get_model()
-    q_embed = embedding_model.encode(question, normalize_embeddings=True)
-    scores = schema_embeddings @ q_embed
-    top_indexes = scores.argsort()[-4:][::-1]
+    scored_docs = []
+    for doc in docs:
+        doc_tokens = _tokens(doc)
+        score = len(question_tokens & doc_tokens)
+        scored_docs.append((score, doc))
 
-    return "\n".join(schema_docs[i] for i in top_indexes)
+    top_docs = [doc for score, doc in sorted(scored_docs, reverse=True) if score > 0]
+
+    if not top_docs:
+        top_docs = docs
+
+    return "\n".join(top_docs[:6])
