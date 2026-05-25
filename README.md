@@ -148,6 +148,28 @@ http://127.0.0.1:5500/
 - `GET /tables` - list database tables
 - `GET /tables/{table_name}` - view table contents
 
+## Deploy To Render
+
+This project includes `render.yaml`, so Render can create the web service from the repository.
+
+1. Push this project to GitHub.
+2. In Render, choose **New +** > **Blueprint**.
+3. Connect the GitHub repository.
+4. Render will detect `render.yaml` and create a Python web service.
+5. Add these environment variables in Render:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+MYSQL_HOST=your_public_mysql_host
+MYSQL_USER=your_mysql_user
+MYSQL_PASSWORD=your_mysql_password
+MYSQL_DB=ecommerce_ai
+```
+
+6. Deploy the service. After it finishes, Render will show the live demo URL.
+
+Important: `MYSQL_HOST=localhost` only works on your own computer. For Render, use a MySQL database that is reachable from the internet, such as a cloud MySQL provider or a server with inbound access configured.
+
 ## GitHub Upload Notes
 
 The `.gitignore` file excludes:

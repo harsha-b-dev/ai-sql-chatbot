@@ -627,7 +627,7 @@ width:100%;
 <h1>Enterprise AI SQL Assistant</h1>
 <p>Ask natural language questions and receive summaries, insights, tables, and charts.</p>
 </div>
-<div class="status-pill"><span class="status-dot"></span>Backend: localhost:8000</div>
+<div class="status-pill"><span class="status-dot"></span>Backend: connected</div>
 </header>
 
 <section id="chat">
@@ -652,6 +652,8 @@ width:100%;
 </main>
 
 <script>
+const API_BASE = window.location.origin;
+
 let chat=document.getElementById("chat");
 let input=document.getElementById("question");
 let historyBox=document.getElementById("history");
@@ -728,7 +730,7 @@ async function loadTables(){
 databaseList.innerHTML='<div>Loading tables...</div>';
 
 try{
-let res=await fetch("http://127.0.0.1:8000/tables");
+let res=await fetch(`${API_BASE}/tables`);
 let data=await res.json();
 
 databaseList.innerHTML="";
@@ -762,7 +764,7 @@ chat.innerHTML=`
 </div>`;
 
 try{
-let res=await fetch(`http://127.0.0.1:8000/tables/${encodeURIComponent(tableName)}`);
+let res=await fetch(`${API_BASE}/tables/${encodeURIComponent(tableName)}`);
 let data=await res.json();
 
 let rowsCount=data.rows ? data.rows.length : 0;
@@ -812,7 +814,7 @@ chat.innerHTML+=`
 chat.scrollTop=chat.scrollHeight;
 
 try{
-let res=await fetch("http://127.0.0.1:8000/ask",{
+let res=await fetch(`${API_BASE}/ask`,{
 method:"POST",
 headers:{"Content-Type":"application/json"},
 body:JSON.stringify({question})
